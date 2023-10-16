@@ -1,0 +1,58 @@
+{
+  "alias": "LedgerAlias",
+  "title": "This is a test title",
+  "beginning_of_ledger_utc": "2023-02-28 00:30:00",
+  "labels": [
+    "TESTING"
+  ],
+  "ledger_accounts": [
+    {
+      "alias": "LBLS",
+      "title": "Company liabilities",
+      "type": "T_ACCOUNT",
+      "signage": "+C",
+      "currency": "EUR",
+      "initial_value": "0.0",
+      "labels": [
+        "LIABILITIES"
+      ]
+    },
+    {
+      "title": "Total Equity",
+      "alias": "TEQ",
+      "type": "T_ACCOUNT",
+      "signage": "+D",
+      "currency": "EUR",
+      "initial_value": "0.0",
+      "labels": []
+    },
+    {
+      "title": "Receivables",
+      "alias": "RVS",
+      "type": "T_ACCOUNT",
+      "signage": "+C",
+      "currency": "EUR",
+      "initial_value": "0.0",
+      "labels": []
+    },
+    {
+      "title": "Regulatory Exposure",
+      "alias": "REXP",
+      "type": "L_ACCOUNT",
+      "signage": "+D",
+      "currency": "EUR",
+      "initial_value": "0.0",
+      "labels": []
+    }
+  ],
+  "flows": {
+    "User deposit": {
+      "DepositStarted": ["D[REXP]_C[RVS]", "C[REXP]"],
+      "DepositCompleted": ["D[REXP]_C[RVS]", "C[REXP]"]
+    },
+    "User withdrawal": {
+      "DepositStarted1": ["D[REXP]_C[RVS]", "C[REXP]"],
+      "DepositCompleted1": ["D[REXP]_C[RVS]", "C[REXP]"]
+    }
+  }
+}
