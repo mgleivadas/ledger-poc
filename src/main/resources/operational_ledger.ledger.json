@@ -1,0 +1,56 @@
+{
+  "alias": "OperationalLedger",
+  "title": "Operational Ledger",
+  "beginning_of_ledger_utc": "2023-01-01 00:00:00",
+  "labels": [
+    "OPERATIONS"
+  ],
+  "ledger_accounts": [
+    {
+      "alias": "CUSTACCT",
+      "title": "Customer Account Balances",
+      "category": "LIABILITY",
+      "type": "T_ACCOUNT",
+      "signage": "+C",
+      "currency": "USDT",
+      "initial_value": "0.0",
+      "labels": []
+    },
+    {
+      "alias": "CLNTACCT",
+      "title": "Client Bank Account",
+      "category": "ASSET",
+      "type": "T_ACCOUNT",
+      "signage": "+D",
+      "currency": "USDT",
+      "initial_value": "0.0",
+      "labels": []
+    },
+    {
+      "alias": "PINPEN",
+      "title": "Payments in pending",
+      "category": "LIABILITY",
+      "type": "L_ACCOUNT",
+      "signage": "+C",
+      "currency": "USDT",
+      "initial_value": "0.0",
+      "labels": []
+    },
+    {
+      "alias": "EXCLNTACCT",
+      "title": "External client bank account",
+      "category": "ASSET",
+      "type": "L_ACCOUNT",
+      "signage": "+D",
+      "currency": "USDT",
+      "initial_value": "0.0",
+      "labels": []
+    }
+  ],
+  "flows": {
+    "Deposit": {
+      "DepositValidated": ["D[EXCLNTACCT]", "C[PINPEN]"],
+      "DepositProcessed": ["D[CLNTACCT]_C[CUSTACCT]"]
+    }
+  }
+}

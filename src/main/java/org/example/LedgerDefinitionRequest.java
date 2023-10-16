@@ -35,6 +35,7 @@ public final class LedgerDefinitionRequest {
     public record LedgerAccountDefinitionRequest(
           String alias,
           String title,
+          String category,
           String type,
           String signage,
           String currency,

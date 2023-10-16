@@ -6,7 +6,7 @@ import static org.example.utils.ResourcesFileUtils.fileContents;
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         while (true) {
-            final var parsedResult = parse(fileContents("src/main/resources/finance.ledger.json"));
+            final var parsedResult = parse(fileContents("src/main/resources/operational_ledger.ledger.json"));
 
             if (parsedResult.isLeft()) {
                 System.out.println("--- Errors:");
