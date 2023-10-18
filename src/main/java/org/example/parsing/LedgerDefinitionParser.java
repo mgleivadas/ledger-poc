@@ -1,7 +1,9 @@
-package org.example;
+package org.example.parsing;
 
-import org.example.LedgerDefinitionRequest.LedgerAccountDefinitionRequest;
-import org.example.domain.FinancialTransactionType;
+import org.example.domain.journal.JournalEntryActions;
+import org.example.parsing.LedgerDefinitionRequest.LedgerAccountDefinitionRequest;
+import org.example.utils.ArgCheck;
+import org.example.utils.DateUtils;
 import org.example.utils.Either;
 import org.example.utils.json.JsonDecoder;
 import org.example.utils.validation.ShortCircuitValidator;
@@ -15,18 +17,11 @@ import java.time.format.ResolverStyle;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.regex.Pattern;
 
-
-import static java.util.Objects.nonNull;
-import static java.util.Optional.empty;
 import static java.util.stream.Collectors.flatMapping;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.example.domain.FinancialTransactionType.CREDIT;
-import static org.example.domain.FinancialTransactionType.DEBIT;
 
 public final class LedgerDefinitionParser {
 
@@ -111,16 +106,9 @@ public final class LedgerDefinitionParser {
                         .formatted(ledgerAlias, String.join(",", duplicates)))));
     }
 
-    static void validateUnusedLedgerAccounts(ValidationContext<LedgerDefinitionRequest> validationContext) {
-
-    }
-
     static void validateBeginningOfLedgerValue(ValidationContext<LedgerDefinitionRequest> validationContext) {
         final var beginningOfLedger = validationContext.getVal().beginningOfLedger;
-
-        try {
-            LocalDateTime.parse(beginningOfLedger, DATE_TIME_FORMATTER);
-        } catch (DateTimeException ex) {
+        if (DateUtils.isValidInstant(beginningOfLedger).isEmpty()) {
             validationContext.error("Beginning of ledger value: '%s' is not valid.".formatted(beginningOfLedger));
         }
     }
@@ -135,7 +123,7 @@ public final class LedgerDefinitionParser {
 
         ledgerDefinition.flowsRequest.getAll().forEach(flowDefinitionRequest -> {
             flowDefinitionRequest.actions().forEach(action -> {
-                    final var doubleEntryResult = DoubleFinancialTxJournalEntryAction.tryParse(action);
+                    final var doubleEntryResult = JournalEntryActions.tryParseDoubleEntryAction(action);
 
                     if (doubleEntryResult.isPresent()) {
                         final var doubleEntry = doubleEntryResult.get();
@@ -163,7 +151,7 @@ public final class LedgerDefinitionParser {
                         return;
                     }
 
-                    final var singleEntryResult = SingleFinancialTxJournalEntryAction.tryParse(action);
+                    final var singleEntryResult = JournalEntryActions.tryParseSingleEntryAction(action);
                     if (singleEntryResult.isPresent()) {
                         final var singleEntry = singleEntryResult.get();
 
@@ -203,64 +191,5 @@ public final class LedgerDefinitionParser {
     private static String missingField(String fieldName) {
         return "Field: '%s' is missing".formatted(fieldName);
     }
-
-    public record SingleFinancialTxJournalEntryAction(FinancialTransactionType txType, String alias) {
-
-        public static Optional<SingleFinancialTxJournalEntryAction> tryParse(String value) {
-
-            final var matcher = SINGLE_FTX_JOURNAL_ENTRY_ACTION_PATTERN.matcher(value);
-
-            if (matcher.matches()
-                  && nonNull(matcher.group(1))
-                  && nonNull(matcher.group(2))) {
-
-                final var txType = matcher.group(1).equals("D") ? DEBIT : CREDIT;
-                return Optional.of(new SingleFinancialTxJournalEntryAction(txType, matcher.group(2)));
-            } else {
-                return empty();
-            }
-        }
-
-        private static final Pattern SINGLE_FTX_JOURNAL_ENTRY_ACTION_PATTERN =
-              Pattern.compile("^([C|D])\\[([A-Z0-9_]+)]$");
-    }
-
-    public record DoubleFinancialTxJournalEntryAction(
-          FinancialTransactionType firstTxType, String firstAlias,
-          FinancialTransactionType secondTxType, String secondAlias) {
-
-        static Optional<DoubleFinancialTxJournalEntryAction> tryParse(String value) {
-
-            final var matcher = DOUBLE_FTX_JOURNAL_ENTRY_ACTION_PATTERN.matcher(value);
-
-            if (matcher.matches()
-                  && nonNull(matcher.group(1))
-                  && nonNull(matcher.group(2))
-                  && nonNull(matcher.group(3))) {
-
-                return Optional.of(new DoubleFinancialTxJournalEntryAction(CREDIT, matcher.group(2), DEBIT, matcher.group(3)));
-            }
-
-            if (matcher.matches()
-                  && nonNull(matcher.group(4))
-                  && nonNull(matcher.group(5))
-                  && nonNull(matcher.group(6))) {
-
-                return Optional.of(new DoubleFinancialTxJournalEntryAction(DEBIT, matcher.group(5), CREDIT, matcher.group(6)));
-            }
-
-            return empty();
-        }
-
-        private static final Pattern DOUBLE_FTX_JOURNAL_ENTRY_ACTION_PATTERN =
-              Pattern.compile("(^C\\[([A-Z0-9_]+)]_D\\[([A-Z0-9_]+)]$)|(^D\\[([A-Z0-9_]+)]_C\\[([A-Z0-9_]+)]$)");
-    }
-
-    private static final ZoneId ZONE_ID_UTC = ZoneId.of("UTC");
-
-    // uuuu is required by ResolverStyle.STRICT instead of yyyy
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
-          .withZone(ZONE_ID_UTC)
-          .withResolverStyle(ResolverStyle.STRICT);
 
 }
